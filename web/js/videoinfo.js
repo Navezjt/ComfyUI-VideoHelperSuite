@@ -81,8 +81,6 @@ function isVideoFile(file) {
     return false;
 }
 
-let originalHandleFile = app.handleFile;
-app.handleFile = handleFile;
 async function handleFile(file) {
     if (file?.type?.startsWith("video/") || isVideoFile(file)) {
         const videoInfo = await getVideoMetadata(file);
@@ -94,9 +92,13 @@ async function handleFile(file) {
             //Potentially check for/parse A1111 metadata here.
         }
     } else {
-        return await originalHandleFile.apply(this, arguments);
+        await app.originalHandleFile(file);
     }
 }
 
+//Storing the original function in app is probably a major no-no
+//But it's the only way I've found to keep the 'this' reference
+app.originalHandleFile = app.handleFile;
+app.handleFile = handleFile;
 //hijack comfy-file-input to allow webm/mp4
 document.getElementById("comfy-file-input").accept += ",video/webm,video/mp4";
